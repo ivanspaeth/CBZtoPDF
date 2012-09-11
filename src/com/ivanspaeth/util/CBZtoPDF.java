@@ -37,6 +37,8 @@ import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 
 public class CBZtoPDF {
 	
+	private static Logger logger = Logger.getLogger("com.ivanspaeth.util.CBZtoPDF");
+	
 	public static void convertCBZtoPDF(File cbzFile, File pdfFile, Boolean overwrite) throws IOException, COSVisitorException {
 		
 		PDDocument pddocument = null;
@@ -44,37 +46,37 @@ public class CBZtoPDF {
 		// Make sure the CB* document exists before we try to read it.
 		if ( !cbzFile.exists() )
 		{
-			Logger.getLogger("com.ivanspaeth.util.CBZtoPDF").log(Level.SEVERE, "File \"" + cbzFile.getAbsolutePath() + "\" does not exist.");
+			logger.log(Level.SEVERE, "File \"" + cbzFile.getAbsolutePath() + "\" does not exist.");
 			throw new IOException();
 		}
 		// TODO: need to make sure the input CBZ is an actual zip by checking more than file extension.
 		else if (!cbzFile.getName().toLowerCase().endsWith( ".cbz" ))
 		{
-			Logger.getLogger("com.ivanspaeth.util.CBZtoPDF").log(Level.SEVERE, "File \"" + cbzFile.getAbsolutePath() + "\" is not a valid Comic Book Archive name.");
+			logger.log(Level.SEVERE, "File \"" + cbzFile.getAbsolutePath() + "\" is not a valid Comic Book Archive name.");
 			throw new IOException();
 		}
 		// TODO: need to make sure the input CBZ is an actual zip by checking more than file extension.
 		else if (!pdfFile.getName().toLowerCase().endsWith( ".pdf" ))
 		{
-			Logger.getLogger("com.ivanspaeth.util.CBZtoPDF").log(Level.SEVERE, "File \"" + pdfFile.getAbsolutePath() + "\" is not a valid PDF file name.");
+			logger.log(Level.SEVERE, "File \"" + pdfFile.getAbsolutePath() + "\" is not a valid PDF file name.");
 			throw new IOException();
 		}
 		// Make sure we can actually read the file.
 		else if ( !cbzFile.canRead() )
 		{
-			Logger.getLogger("com.ivanspaeth.util.CBZtoPDF").log(Level.SEVERE, "File \"" + cbzFile.getAbsolutePath() + "\" can not be read.");
+			logger.log(Level.SEVERE, "File \"" + cbzFile.getAbsolutePath() + "\" can not be read.");
 			throw new IOException();
 		}
 		// Test to see if the overwrite flag is passed and if the file exists or not.
 		else if (!overwrite && pdfFile.exists())
 		{
-			Logger.getLogger("com.ivanspaeth.util.CBZtoPDF").log(Level.SEVERE, "File \"" + pdfFile.getAbsolutePath() + "\" already exists.");
+			logger.log(Level.SEVERE, "File \"" + pdfFile.getAbsolutePath() + "\" already exists.");
 			throw new IOException();
 		}
 		// If the file exists lets make sure we can write too it.
 		else if (pdfFile.exists() && overwrite && !pdfFile.canWrite())
 		{
-			Logger.getLogger("com.ivanspaeth.util.CBZtoPDF").log(Level.SEVERE, "File \"" + pdfFile.getAbsolutePath() + "\" can not be written too.");
+			logger.log(Level.SEVERE, "File \"" + pdfFile.getAbsolutePath() + "\" can not be written too.");
 			throw new IOException();
 		}
 		
@@ -84,7 +86,7 @@ public class CBZtoPDF {
 		try {
 			pddocument = new PDDocument();
 		} catch(IOException e) {
-			Logger.getLogger("com.ivanspaeth.util.CBZtoPDF").log(Level.SEVERE, "Unable to create new PD document.");
+			logger.log(Level.SEVERE, "Unable to create new PD document.");
 			throw new IOException();
 		}
 		
@@ -103,6 +105,7 @@ public class CBZtoPDF {
 				// TODO: need to make sure it's an actual JPG file.
 				
 				// Read the image file.
+				logger.log(Level.INFO, entry.getName() + " extracting from source.");
 				Image imageFile = ImageIO.read(zipFile.getInputStream(entry));
 
 				// Create a rectangle so we can tell the page how big it is.
@@ -116,12 +119,14 @@ public class CBZtoPDF {
 				imageFile = null;
 				
 				// Create the page with the proper dimensions.
+				logger.log(Level.INFO, entry.getName() + " creating PDPage to match image.");
 				PDPage page = new PDPage(cropBox);
 				
 				// Add the page to the document.
 				pddocument.addPage(page);
 				
 				// Get the image to plop on the page.
+				logger.log(Level.INFO, entry.getName() + " drawing image to PDPage.");
 				InputStream image = zipFile.getInputStream(entry);
 				PDJpeg ximage = new PDJpeg(pddocument, image);
 				// Stream the image onto the page.
@@ -129,11 +134,12 @@ public class CBZtoPDF {
 				// Draw the image onto the stream.
 				contentStream.drawImage( ximage, 0, 0 );
 				// close it.
+				logger.log(Level.INFO, "Closing streams.");
 				contentStream.close();
 				image.close();
 				
 				// TODO: create better logging.
-				Logger.getLogger("com.ivanspaeth.util.CBZtoPDF").log(Level.INFO, entry.getName() + " added to PDF.");
+				logger.log(Level.INFO, entry.getName() + " added to PDF.");
 				
 			}
 		}
