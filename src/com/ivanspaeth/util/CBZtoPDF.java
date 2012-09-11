@@ -1,5 +1,6 @@
 package com.ivanspaeth.util;
 
+// All the required imports.
 
 import java.awt.Image;
 import java.io.File;
@@ -63,7 +64,7 @@ public class CBZtoPDF {
 			logger.log(Level.SEVERE, "File \"" + cbzFile.getAbsolutePath() + "\" is not a valid Comic Book Archive name.");
 			throw new IOException();
 		}
-		// TODO: need to make sure the input CBZ is an actual zip by checking more than file extension.
+		// TODO: need to make sure the output pdf is an actual pdf by checking more than file extension.
 		else if (!pdfFile.getName().toLowerCase().endsWith( ".pdf" ))
 		{
 			logger.log(Level.SEVERE, "File \"" + pdfFile.getAbsolutePath() + "\" is not a valid PDF file name.");
@@ -88,73 +89,91 @@ public class CBZtoPDF {
 			throw new IOException();
 		}
 		
-		// TODO: need to make sure the output PDF file has the PDF extension.
-		
 		// Attempt to create a PDF file in memories.
+		pddocument = new PDDocument();
+	
 		try {
-			pddocument = new PDDocument();
-		} catch(IOException e) {
-			logger.log(Level.SEVERE, "Unable to create new PD document.");
-			throw new IOException();
-		}
 		
-		// Initialize the zip file.
-		ZipFile zipFile = new ZipFile(cbzFile.getAbsolutePath());
-
-		// This should be ok, but WHO REALL KNOWS FOR SURE.
-		@SuppressWarnings("rawtypes")
-		Enumeration entries = zipFile.entries();
+			// Initialize the zip file.
+			ZipFile zipFile = new ZipFile(cbzFile.getAbsolutePath());
+	
+			try {
+			
+				// This should be ok, but WHO REALL KNOWS FOR SURE.
+				@SuppressWarnings("rawtypes")
+				Enumeration entries = zipFile.entries();
+				
+				// Loop through each element.
+				while(entries.hasMoreElements()) {
+					ZipEntry entry = (ZipEntry)entries.nextElement();
+					if(!entry.isDirectory() && entry.getName().toLowerCase().endsWith( ".jpg" )) {
+						
+						// TODO: need to make sure it's an actual JPG file.
+						
+						// Read the image file.
+						logger.log(Level.INFO, entry.getName() + " extracting from source.");
+						Image imageFile = ImageIO.read(zipFile.getInputStream(entry));
 		
-		// Loop through each element.
-		while(entries.hasMoreElements()) {
-			ZipEntry entry = (ZipEntry)entries.nextElement();
-			if(!entry.isDirectory() && entry.getName().toLowerCase().endsWith( ".jpg" )) {
-				
-				// TODO: need to make sure it's an actual JPG file.
-				
-				// Read the image file.
-				logger.log(Level.INFO, entry.getName() + " extracting from source.");
-				Image imageFile = ImageIO.read(zipFile.getInputStream(entry));
+						// Create a rectangle so we can tell the page how big it is.
+						PDRectangle cropBox = new PDRectangle();
+						cropBox.setLowerLeftX(0);
+						cropBox.setLowerLeftY(imageFile.getHeight(null));
+						cropBox.setUpperRightY(0);
+						cropBox.setUpperRightX(imageFile.getWidth(null));
+						
+						// remove from memory don't need it anymore.
+						imageFile = null;
+						
+						// Create the page with the proper dimensions.
+						logger.log(Level.INFO, entry.getName() + " creating PDPage to match image.");
+						PDPage page = new PDPage(cropBox);
+						
+						// Add the page to the document.
+						pddocument.addPage(page);
+						
+						// Get the image to plop on the page.
+						logger.log(Level.INFO, entry.getName() + " drawing image to PDPage.");
+						InputStream image = zipFile.getInputStream(entry);
+						PDJpeg ximage = new PDJpeg(pddocument, image);
+						// Stream the image onto the page.
+						PDPageContentStream contentStream = new PDPageContentStream(pddocument, page, true, true);
+						// Draw the image onto the stream.
+						contentStream.drawImage( ximage, 0, 0 );
+						// close it.
+						logger.log(Level.INFO, "Closing streams.");
+						contentStream.close();
+						image.close();
+						
+						// TODO: create better logging.
+						logger.log(Level.INFO, entry.getName() + " added to PDF.");
+						
+					}
+				}
+				// Save the created PDF file.
+				logger.log(Level.INFO, "Saving PDF file to \"" + pdfFile.getAbsolutePath() + "\"");
+				try {
+					pddocument.save(pdfFile.getAbsolutePath());
+				}
+				catch(Exception e)
+				{
+					logger.log(Level.SEVERE, "Unable to save PDF file to \"" + pdfFile.getAbsolutePath() + "\"");
+					throw e;
+				}
 
-				// Create a rectangle so we can tell the page how big it is.
-				PDRectangle cropBox = new PDRectangle();
-				cropBox.setLowerLeftX(0);
-				cropBox.setLowerLeftY(imageFile.getHeight(null));
-				cropBox.setUpperRightY(0);
-				cropBox.setUpperRightX(imageFile.getWidth(null));
-				
-				// remove from memory don't need it anymore.
-				imageFile = null;
-				
-				// Create the page with the proper dimensions.
-				logger.log(Level.INFO, entry.getName() + " creating PDPage to match image.");
-				PDPage page = new PDPage(cropBox);
-				
-				// Add the page to the document.
-				pddocument.addPage(page);
-				
-				// Get the image to plop on the page.
-				logger.log(Level.INFO, entry.getName() + " drawing image to PDPage.");
-				InputStream image = zipFile.getInputStream(entry);
-				PDJpeg ximage = new PDJpeg(pddocument, image);
-				// Stream the image onto the page.
-				PDPageContentStream contentStream = new PDPageContentStream(pddocument, page, true, true);
-				// Draw the image onto the stream.
-				contentStream.drawImage( ximage, 0, 0 );
-				// close it.
-				logger.log(Level.INFO, "Closing streams.");
-				contentStream.close();
-				image.close();
-				
-				// TODO: create better logging.
-				logger.log(Level.INFO, entry.getName() + " added to PDF.");
-				
 			}
+			finally
+			{
+				// make sure the zip file is closed.
+				zipFile.close();
+			}
+			
 		}
-
-		zipFile.close();
-		pddocument.save(pdfFile.getAbsolutePath());
-		pddocument.close();
+		finally
+		{
+			// Make sure the PD Document is closed.
+			pddocument.close();
+		}
+		
 
 	}
 	
