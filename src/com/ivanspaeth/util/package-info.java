@@ -1,8 +1,5 @@
 /**
- * 
- */
-/**
- * @author Ivan
+ * @author Ivan Spaeth
  *
  */
 package com.ivanspaeth.util;

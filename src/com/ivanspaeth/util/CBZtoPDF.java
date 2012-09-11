@@ -28,17 +28,25 @@ import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 
 /**
  * Console utility used for converting a Comic Book Archive into a PDF document.
- * @author Ivan
+ * @author Ivan Spaeth
  *
  */
 
-
-
-
 public class CBZtoPDF {
 	
+	/**
+	 * Setup and configure the default logger for this object.
+	 */
 	private static Logger logger = Logger.getLogger("com.ivanspaeth.util.CBZtoPDF");
 	
+	
+	/**
+	 * Method for converting a CBZ file to a PDF file.
+	 * @param cbzFile The file to be converted into a pdf.
+	 * @param pdfFile The PDF file to be saved.
+	 * @param overwrite Boolean to prevent files from being overwritten.
+	 *
+	 */
 	public static void convertCBZtoPDF(File cbzFile, File pdfFile, Boolean overwrite) throws IOException, COSVisitorException {
 		
 		PDDocument pddocument = null;
@@ -155,6 +163,7 @@ public class CBZtoPDF {
 	
 	
 	/**
+	 * Console utility used for converting a Comic Book Archive into a PDF document.
 	 * @param args
 	 */
 	public static void main(String[] args) {
