@@ -1,1 +1,1 @@
-@java -Dlog4j.configuration=log4j.xml -jar CBZtoPDF.jar %*
+@java -jar CBZtoPDF.jar %*
