@@ -1,3 +1,10 @@
 CBZtoPDF
+===
 
 Converts CBZ (Comic Book Archives) to PDF files.
+
+Dependencies
+===
+
+Apache Commons IO
+Apache PDFBox
