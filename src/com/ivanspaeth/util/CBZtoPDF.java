@@ -23,9 +23,6 @@ import org.apache.pdfbox.pdmodel.edit.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 
 
-// TODO: Logging is terribad.  Needs work.
-
-
 
 /**
  * Console utility used for converting a Comic Book Archive into a PDF document.
@@ -48,9 +45,15 @@ public class CBZtoPDF {
 	 * @param overwrite Boolean to prevent files from being overwritten.
 	 *
 	 */
-	public static void convertCBZtoPDF(File cbzFile, File pdfFile, Boolean overwrite) throws IOException, COSVisitorException {
+	public static void convertCBZtoPDF
+    (
+        File cbzFile,
+        File pdfFile,
+        Boolean overwrite
+    ) throws IOException, COSVisitorException, CBZPDFException
+    {
 		
-		PDDocument pddocument = null;
+		PDDocument pddocument;
 		
 		// Make sure the CB* document exists before we try to read it.
 		if ( !cbzFile.exists() )
@@ -98,9 +101,7 @@ public class CBZtoPDF {
 			ZipFile zipFile = new ZipFile(cbzFile.getAbsolutePath());
 	
 			try {
-			
-				// This should be ok, but WHO REALL KNOWS FOR SURE.
-				@SuppressWarnings("rawtypes")
+
 				Enumeration entries = zipFile.entries();
 				
 				// Loop through each element.
@@ -120,9 +121,6 @@ public class CBZtoPDF {
 						cropBox.setLowerLeftY(imageFile.getHeight(null));
 						cropBox.setUpperRightY(0);
 						cropBox.setUpperRightX(imageFile.getWidth(null));
-						
-						// remove from memory don't need it anymore.
-						imageFile = null;
 						
 						// Create the page with the proper dimensions.
 						logger.log(Level.INFO, entry.getName() + " creating PDPage to match image.");
@@ -157,7 +155,7 @@ public class CBZtoPDF {
 				catch(Exception e)
 				{
 					logger.log(Level.SEVERE, "Unable to save PDF file to \"" + pdfFile.getAbsolutePath() + "\"");
-					throw e;
+					throw new CBZPDFException(e);
 				}
 
 			}
@@ -183,27 +181,23 @@ public class CBZtoPDF {
 	
 	/**
 	 * Console utility used for converting a Comic Book Archive into a PDF document.
-	 * @param args
+	 * @param args Command line arguments.
 	 */
-	public static void main(String[] args) {
-		try
+	public static void main(String[] args) throws COSVisitorException, IOException, CBZPDFException {
+        if( args.length != 2 )
         {
-            if( args.length != 2 )
-            {
-                System.out.println("usage: CBZtoPDF CBZFILE PDFFILE");
-            }
-            else
-            {
-            	// Set the logger to display only severe logs.
-            	Logger.getLogger("com").getParent().setLevel(Level.SEVERE);
-            	// Create the File objects.
-            	File cbzFile = new File(args[0]);
-            	File pdfFile = new File(args[1]);
-            	// Convert it!
-            	CBZtoPDF.convertCBZtoPDF(cbzFile, pdfFile, false);
-            }
+            System.out.println("usage: CBZtoPDF CBZFILE PDFFILE");
         }
-        catch (Exception e) {}
+        else
+        {
+            // Set the logger to display only severe logs.
+            Logger.getLogger("com").getParent().setLevel(Level.SEVERE);
+            // Create the File objects.
+            File cbzFile = new File(args[0]);
+            File pdfFile = new File(args[1]);
+            // Convert it!
+            CBZtoPDF.convertCBZtoPDF(cbzFile, pdfFile, false);
+        }
 	}
 
 }
